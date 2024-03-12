@@ -8,5 +8,5 @@ function fib(n)
     return n1 + n2;
  end
  
- print(fib(30));
+ print(fib(30)); -- expect: 832040
  

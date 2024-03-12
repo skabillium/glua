@@ -1,2 +1,2 @@
 local x = 22;
-print(x);
+print(x); -- expect: 22
