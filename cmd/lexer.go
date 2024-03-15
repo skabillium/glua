@@ -35,7 +35,6 @@ const (
 	Number
 	Line
 	Semi
-	Eof
 
 	Plus
 	Minus
@@ -68,6 +67,7 @@ const (
 	Dot
 	DotDot
 	DotDotDot
+	Eof
 )
 
 type Token struct {
@@ -114,9 +114,6 @@ func NewLexer(source string) *Lexer {
 	return &Lexer{source: source, position: 0}
 }
 
-func (lex *Lexer) NextToken() {
-}
-
 func (lex *Lexer) readToken() (*Token, error) {
 	lex.skipWhitespace()
 	if lex.position >= len(lex.source) {
@@ -125,15 +122,96 @@ func (lex *Lexer) readToken() (*Token, error) {
 
 	c := lex.currentChar()
 	switch c {
+	case '\n':
+		return lex.makeToken(Line, 1), nil
+	case ';':
+		return lex.makeToken(Semi, 1), nil
+	case '+':
+		return lex.makeToken(Plus, 1), nil
+	case '-':
+		return lex.makeToken(Minus, 1), nil
+	case '*':
+		return lex.makeToken(Star, 1), nil
+	case '%':
+		return lex.makeToken(Percent, 1), nil
+	case '^':
+		return lex.makeToken(Caret, 1), nil
+	case '&':
+		return lex.makeToken(Amp, 1), nil
+	case '|':
+		return lex.makeToken(Pipe, 1), nil
+	case '(':
+		return lex.makeToken(LParen, 1), nil
+	case ')':
+		return lex.makeToken(RParen, 1), nil
+	case '{':
+		return lex.makeToken(LCurly, 1), nil
+	case '}':
+		return lex.makeToken(RCurly, 1), nil
+	case '[':
+		return lex.makeToken(LBracket, 1), nil
+	case ']':
+		return lex.makeToken(RBracket, 1), nil
+	case ',':
+		return lex.makeToken(Comma, 1), nil
+	// Multi-character tokens
+	case '<':
+		if lex.match("<<") {
+			return lex.makeToken(LtLt, 2), nil
+		} else if lex.match("<=") {
+			return lex.makeToken(Lte, 2), nil
+		}
+		return lex.makeToken(Lt, 1), nil
+	case '>':
+		if lex.match(">>") {
+			return lex.makeToken(GtGt, 2), nil
+		} else if lex.match(">=") {
+			return lex.makeToken(Gte, 2), nil
+		}
+		return lex.makeToken(Gt, 1), nil
+	case '~':
+		if lex.match("~=") {
+			return lex.makeToken(Neq, 2), nil
+		}
+		return lex.makeToken(Tilde, 1), nil
+	case '=':
+		if lex.match("==") {
+			return lex.makeToken(EqEq, 2), nil
+		}
+		return lex.makeToken(Eq, 1), nil
+	case ':':
+		if lex.match("::") {
+			return lex.makeToken(DoubleCol, 2), nil
+		}
+		return lex.makeToken(Col, 1), nil
+	case '/':
+		if lex.match("//") {
+			return lex.makeToken(DoubleSlash, 2), nil
+		}
+		return lex.makeToken(Slash, 1), nil
+	case '.':
+		// if unicode.IsDigit(lex.peekChar()) {
+		// 	// TODO: Read float
+		// }
+
+		if lex.match("...") {
+			return lex.makeToken(DotDotDot, 3), nil
+		} else if lex.match("..") {
+			return lex.makeToken(DotDot, 2), nil
+		}
+
+		return lex.makeToken(Dot, 1), nil
+	default:
+		if isName(c) {
+			return lex.readName(), nil
+		} else if isOperator(c) {
+			return lex.readOperator(), nil
+		} else if unicode.IsDigit(c) {
+			return lex.readNumber(), nil
+		}
 	}
 
-	if isName(c) {
-		return lex.readName(), nil
-	} else if unicode.IsDigit(c) {
-		return lex.readNumber(), nil
-	}
-
-	return nil, errors.New("unexpected character")
+	return nil, errors.New("unexpected character: " + string(c))
 }
 
 func (lex *Lexer) skipWhitespace() {
@@ -186,11 +264,44 @@ func (lex *Lexer) readNumber() *Token {
 	return NewToken(Number, start, length)
 }
 
+func (lex *Lexer) readOperator() *Token {
+	return &Token{kind: LtLt, start: lex.position, length: 1}
+}
+
 func (lex *Lexer) currentChar() rune {
 	return rune(lex.source[lex.position])
 }
 
-// func (lex *Lexer) peek() rune {}
+func (lex *Lexer) peekChar() rune {
+	return rune(lex.source[lex.position+1])
+}
+
+func (lex *Lexer) advance() {
+	lex.position++
+}
+
+func (lex *Lexer) advanceBy(incr int) {
+	lex.position += incr
+}
+
+func (lex *Lexer) match(str string) bool {
+	if lex.position+len(str) > len(lex.source) {
+		return false
+	}
+
+	return str == lex.source[lex.position:lex.position+len(str)]
+}
+
+func (lex *Lexer) makeToken(kind int, length int) *Token {
+	token := &Token{kind: kind, start: lex.position, length: length}
+	lex.advanceBy(length)
+	return token
+}
+
+// func (lex *Lexer) nextChar() rune {
+// 	lex.position++
+// 	return lex.currentChar()
+// }
 
 func (lex *Lexer) isAtEnd() bool {
 	return lex.position >= len(lex.source)
@@ -204,3 +315,5 @@ func isName(r rune) bool {
 	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || r == '_'
 
 }
+
+func isOperator(r rune) bool { return false }
