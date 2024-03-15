@@ -190,9 +190,9 @@ func (lex *Lexer) readToken() (*Token, error) {
 		}
 		return lex.makeToken(Slash, 1), nil
 	case '.':
-		// if unicode.IsDigit(lex.peekChar()) {
-		// 	// TODO: Read float
-		// }
+		if unicode.IsDigit(lex.peekChar()) {
+			return lex.readNumber(false), nil
+		}
 
 		if lex.match("...") {
 			return lex.makeToken(DotDotDot, 3), nil
@@ -207,7 +207,7 @@ func (lex *Lexer) readToken() (*Token, error) {
 		} else if isOperator(c) {
 			return lex.readOperator(), nil
 		} else if unicode.IsDigit(c) {
-			return lex.readNumber(), nil
+			return lex.readNumber(true), nil
 		}
 	}
 
@@ -222,7 +222,7 @@ func (lex *Lexer) skipWhitespace() {
 	c := lex.currentChar()
 
 	for c == ' ' || c == '\t' {
-		lex.position++
+		lex.advance()
 		if lex.position >= len(lex.source) {
 			break
 		}
@@ -235,10 +235,10 @@ func (lex *Lexer) readName() *Token {
 	start := lex.position
 	length := 1
 
-	lex.position++
+	lex.advance()
 	for !lex.isAtEnd() && isAlphanumeric(lex.currentChar()) {
 		length++
-		lex.position++
+		lex.advance()
 	}
 
 	name := lex.source[start : start+length]
@@ -250,14 +250,16 @@ func (lex *Lexer) readName() *Token {
 	return NewToken(kind, start, length)
 }
 
-func (lex *Lexer) readNumber() *Token {
+func (lex *Lexer) readNumber(allowDecimals bool) *Token {
 	start := lex.position
 	length := 1
 
-	lex.position++
-	// TODO: Support decimals
-	for !lex.isAtEnd() && unicode.IsDigit(lex.currentChar()) {
-		lex.position++
+	lex.advance()
+	for !lex.isAtEnd() && (unicode.IsDigit(lex.currentChar()) || allowDecimals && lex.currentChar() == '.') {
+		if lex.currentChar() == '.' {
+			allowDecimals = false
+		}
+		lex.advance()
 		length++
 	}
 
@@ -297,11 +299,6 @@ func (lex *Lexer) makeToken(kind int, length int) *Token {
 	lex.advanceBy(length)
 	return token
 }
-
-// func (lex *Lexer) nextChar() rune {
-// 	lex.position++
-// 	return lex.currentChar()
-// }
 
 func (lex *Lexer) isAtEnd() bool {
 	return lex.position >= len(lex.source)

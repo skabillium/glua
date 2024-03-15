@@ -5,6 +5,7 @@ An intererpreter for a minimal subset of Lua written in go.
 
 Create a lua file:
 ```lua
+-- File: fib.lua
 function fib(n)
    if n < 2 then
       return n;
@@ -14,6 +15,8 @@ function fib(n)
    local n2 = fib(n-2);
    return n1 + n2;
 end
+
+print(fib(10))
 ```
 
 ```sh
