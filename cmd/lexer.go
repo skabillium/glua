@@ -30,6 +30,7 @@ const (
 	Until
 	While
 
+	Comment
 	Name
 	String
 	Number
@@ -128,8 +129,6 @@ func (lex *Lexer) readToken() (*Token, error) {
 		return lex.makeToken(Semi, 1), nil
 	case '+':
 		return lex.makeToken(Plus, 1), nil
-	case '-':
-		return lex.makeToken(Minus, 1), nil
 	case '*':
 		return lex.makeToken(Star, 1), nil
 	case '%':
@@ -155,6 +154,11 @@ func (lex *Lexer) readToken() (*Token, error) {
 	case ',':
 		return lex.makeToken(Comma, 1), nil
 	// Multi-character tokens
+	case '-':
+		if lex.match("--") {
+			return lex.readComment(), nil
+		}
+		return lex.makeToken(Minus, 1), nil
 	case '<':
 		if lex.match("<<") {
 			return lex.makeToken(LtLt, 2), nil
@@ -264,6 +268,19 @@ func (lex *Lexer) readNumber(allowDecimals bool) *Token {
 	}
 
 	return NewToken(Number, start, length)
+}
+
+func (lex *Lexer) readComment() *Token {
+	start := lex.position
+	length := 2
+	lex.advanceBy(2)
+
+	for !lex.isAtEnd() && lex.currentChar() != '\n' {
+		lex.advance()
+		length++
+	}
+
+	return &Token{kind: Comment, start: start, length: length}
 }
 
 func (lex *Lexer) readOperator() *Token {
