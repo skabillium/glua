@@ -71,6 +71,12 @@ const (
 	Eof
 )
 
+// type LexerError struct {
+// 	Err error
+// 	Row int
+// 	Col int
+// }
+
 type Token struct {
 	kind   int
 	start  int
@@ -153,6 +159,8 @@ func (lex *Lexer) readToken() (*Token, error) {
 		return lex.makeToken(RBracket, 1), nil
 	case ',':
 		return lex.makeToken(Comma, 1), nil
+	case '"', '\'':
+		return lex.readString(c), nil
 	// Multi-character tokens
 	case '-':
 		if lex.match("--") {
@@ -270,6 +278,24 @@ func (lex *Lexer) readNumber(allowDecimals bool) *Token {
 	return NewToken(Number, start, length)
 }
 
+func (lex *Lexer) readString(term rune) *Token {
+	start := lex.position
+	length := 1
+
+	// var buffer strings.Builder
+
+	for !lex.isAtEnd() {
+		c := lex.nextChar()
+		length++
+		if c == term {
+			lex.advance()
+			break
+		}
+	}
+
+	return &Token{kind: String, start: start, length: length}
+}
+
 func (lex *Lexer) readComment() *Token {
 	start := lex.position
 	length := 2
@@ -289,6 +315,11 @@ func (lex *Lexer) readOperator() *Token {
 
 func (lex *Lexer) currentChar() rune {
 	return rune(lex.source[lex.position])
+}
+
+func (lex *Lexer) nextChar() rune {
+	lex.advance()
+	return lex.currentChar()
 }
 
 func (lex *Lexer) peekChar() rune {
@@ -316,6 +347,11 @@ func (lex *Lexer) makeToken(kind int, length int) *Token {
 	lex.advanceBy(length)
 	return token
 }
+
+// func (lex *Lexer) newLexerError(message string) *LexerError {
+// 	// TODO: Get row and col
+// 	return &LexerError{err: errors.New(message), row: 0, col: 0}
+// }
 
 func (lex *Lexer) isAtEnd() bool {
 	return lex.position >= len(lex.source)
