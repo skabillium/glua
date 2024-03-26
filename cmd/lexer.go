@@ -71,12 +71,6 @@ const (
 	Eof
 )
 
-// type LexerError struct {
-// 	Err error
-// 	Row int
-// 	Col int
-// }
-
 type Token struct {
 	kind   int
 	start  int
@@ -216,8 +210,6 @@ func (lex *Lexer) readToken() (*Token, error) {
 	default:
 		if isName(c) {
 			return lex.readName(), nil
-		} else if isOperator(c) {
-			return lex.readOperator(), nil
 		} else if unicode.IsDigit(c) {
 			return lex.readNumber(true), nil
 		}
@@ -278,6 +270,7 @@ func (lex *Lexer) readNumber(allowDecimals bool) *Token {
 	return NewToken(Number, start, length)
 }
 
+// TODO: This could return an error
 func (lex *Lexer) readString(term rune) *Token {
 	start := lex.position
 	length := 1
@@ -348,11 +341,6 @@ func (lex *Lexer) makeToken(kind int, length int) *Token {
 	return token
 }
 
-// func (lex *Lexer) newLexerError(message string) *LexerError {
-// 	// TODO: Get row and col
-// 	return &LexerError{err: errors.New(message), row: 0, col: 0}
-// }
-
 func (lex *Lexer) isAtEnd() bool {
 	return lex.position >= len(lex.source)
 }
@@ -365,5 +353,3 @@ func isName(r rune) bool {
 	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || r == '_'
 
 }
-
-func isOperator(r rune) bool { return false }
