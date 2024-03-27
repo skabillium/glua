@@ -5,6 +5,8 @@ import (
 	"unicode"
 )
 
+// TODO: Tokenize '#'
+
 const (
 	// Keywords
 	And = iota
@@ -46,6 +48,7 @@ const (
 	Amp
 	Tilde
 	Pipe
+	Hash
 	LtLt
 	GtGt
 	DoubleSlash
@@ -153,6 +156,8 @@ func (lex *Lexer) readToken() (*Token, error) {
 		return lex.makeToken(RBracket, 1), nil
 	case ',':
 		return lex.makeToken(Comma, 1), nil
+	case '#':
+		return lex.makeToken(Hash, 1), nil
 	case '"', '\'':
 		return lex.readString(c), nil
 	// Multi-character tokens

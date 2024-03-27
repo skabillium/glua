@@ -36,11 +36,12 @@ func DebugChunk(chunk Chunk) {
 
 type VM struct {
 	chunk Chunk
+	stack *Stack
 	ip    int
 }
 
 func NewVM(chunk Chunk) *VM {
-	return &VM{chunk: chunk, ip: 0}
+	return &VM{chunk: chunk, stack: NewStack(), ip: 0}
 }
 
 func (vm *VM) Run() {
@@ -51,4 +52,8 @@ func (vm *VM) Run() {
 			panic("Run() is WIP, aborting")
 		}
 	}
+}
+
+func (vm *VM) Write(ops ...int) {
+	vm.chunk = append(vm.chunk, ops...)
 }
