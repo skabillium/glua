@@ -2,11 +2,17 @@ package main
 
 import "fmt"
 
+var NilObj = NewNilValue()
+var TrueObj = NewBoolValue(true)
+var FalseObj = NewBoolValue(false)
+
 // VM Operations
 const (
 	OpNil = iota
 	OpTrue
 	OpFalse
+	OpNumber
+	OpString
 
 	OpAdd
 	OpSub
@@ -48,6 +54,9 @@ func (vm *VM) Run() {
 	for vm.ip <= len(vm.chunk) {
 		op := vm.chunk[vm.ip]
 		switch op {
+		case OpTrue:
+			fallthrough
+
 		default:
 			panic("Run() is WIP, aborting")
 		}
